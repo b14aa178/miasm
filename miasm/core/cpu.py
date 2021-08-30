@@ -737,10 +737,6 @@ class reg_noarg(object):
             log.debug("cannot encode reg %r", self.expr)
             return False
         self.value = self.reg_info.expr.index(self.expr)
-        if self.value > self.lmask:
-            log.debug("cannot encode field value %x %x",
-                      self.value, self.lmask)
-            return False
         return True
 
     def check_fbits(self, v):
@@ -1386,7 +1382,6 @@ class cls_mn(with_metaclass(metamn, object)):
         can modify args and get the hex of a modified instruction
         """
         clist = cls.all_mn_name[instr.name]
-        clist = [x for x in clist]
         vals = []
         candidates = []
         args = instr.resolve_args_with_symbols(loc_db)
@@ -1456,7 +1451,10 @@ class cls_mn(with_metaclass(metamn, object)):
                     break
 
                 if f.value is not None and f.l:
-                    assert f.value <= f.lmask
+                    if f.value > f.lmask:
+                        log.debug('cannot encode %r', f)
+                        can_encode = False
+                        break
                     cur_len += f.l
                 index += 1
                 if ret is True:

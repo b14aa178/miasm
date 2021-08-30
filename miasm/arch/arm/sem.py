@@ -971,6 +971,20 @@ def blx(ir, instr, a):
     e.append(ExprAssign(LR, l))
     return e, []
 
+# todo
+def vmov(ir, instr, a, b, c=None):
+    e = []
+    return e, []
+
+# todo
+def vstr(ir, instr, a, b):
+    e = []
+    return e, []
+
+# todo
+def vcvt(ir, instr, a, a2):
+    e = []
+    return e, []
 
 def st_ld_r(ir, instr, a, a2, b, store=False, size=32, s_ext=False, z_ext=False):
     e = []
@@ -1039,6 +1053,10 @@ def st_ld_r(ir, instr, a, a2, b, store=False, size=32, s_ext=False, z_ext=False)
 def ldr(ir, instr, a, b):
     return st_ld_r(ir, instr, a, None, b, store=False)
 
+# todo:
+def ldrex(ir, instr, a, b):
+    e = []
+    return e, []
 
 def ldrd(ir, instr, a, b, c=None):
     if c is None:
@@ -1052,6 +1070,10 @@ def ldrd(ir, instr, a, b, c=None):
 def l_str(ir, instr, a, b):
     return st_ld_r(ir, instr, a, None, b, store=True)
 
+# todo:
+def strex(ir, instr, a, b, c=None):
+    e = []
+    return e, []
 
 def l_strd(ir, instr, a, b, c=None):
     if c is None:
@@ -1526,6 +1548,10 @@ def nop(ir, instr):
     e = []
     return e, []
 
+# todo:
+def dmb(ir, instr, a):
+    e = []
+    return e, []
 
 def dsb(ir, instr, a):
     # XXX TODO
@@ -1764,8 +1790,10 @@ mnemo_condm0 = {'add': add,
                 'ldr': ldr,
                 'ldrd': ldrd,
                 'ldrsb': ldrsb,
+                'ldrex': ldrex,
                 'str': l_str,
                 'strd': l_strd,
+                'strex': strex,
                 'b': b,
                 'bl': bl,
                 'svc': svc,
@@ -1826,6 +1854,10 @@ mnemo_condm1 = {'adds': add,
                 'ldrb': ldrb,
                 'ldsb': ldrsb,
                 'strb': strb,
+
+                'vmov': vmov,
+                'vstr': vstr,
+                'vcvt': vcvt
                 }
 
 mnemo_condm2 = {'ldmia': ldmia,
@@ -1881,6 +1913,7 @@ mnemo_nocond = {'lsr': lsr,
                 'smlatt': smlatt,
                 'uadd8': uadd8,
                 'sel': sel,
+                'dmb': dmb
                 }
 
 mn_cond_x = [mnemo_condm0,
