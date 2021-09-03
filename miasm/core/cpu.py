@@ -1382,7 +1382,6 @@ class cls_mn(with_metaclass(metamn, object)):
         can modify args and get the hex of a modified instruction
         """
         clist = cls.all_mn_name[instr.name]
-        clist = [x for x in clist]
         vals = []
         candidates = []
         args = instr.resolve_args_with_symbols(loc_db)
