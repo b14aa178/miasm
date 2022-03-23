@@ -14,6 +14,8 @@ from miasm.arch.aarch64.regs import *
 from miasm.core.cpu import log as log_cpu
 from miasm.core.modint import mod_size2int
 from miasm.core.asm_ast import AstInt, AstId, AstMem, AstOp
+from miasm.ir.ir import color_expr_html
+from miasm.core import utils
 
 log = logging.getLogger("aarch64dis")
 console_handler = logging.StreamHandler()
@@ -314,7 +316,6 @@ class aarch64_arg(m_arg):
 
 class instruction_aarch64(instruction):
     __slots__ = []
-    delayslot = 0
 
     def __init__(self, *args, **kargs):
         super(instruction_aarch64, self).__init__(*args, **kargs)
@@ -363,6 +364,73 @@ class instruction_aarch64(instruction):
             else:
                 arg = "%s %s %s" % (arg.args[0], arg.op, arg.args[1])
             return '[%s, %s]' % (expr.args[0], arg)
+
+        else:
+            raise NotImplementedError("bad op")
+
+    @staticmethod
+    def arg2html(expr, index=None, loc_db=None):
+        wb = False
+        if expr.is_id() or expr.is_int() or expr.is_loc():
+            return color_expr_html(expr, loc_db)
+        elif isinstance(expr, m2_expr.ExprOp) and expr.op in shift_expr:
+            op_str = shift_str[shift_expr.index(expr.op)]
+            return "%s %s %s" % (
+                color_expr_html(expr.args[0], loc_db),
+                utils.set_html_text_color(op_str, utils.COLOR_OP),
+                color_expr_html(expr.args[1], loc_db)
+            )
+        elif isinstance(expr, m2_expr.ExprOp) and expr.op == "slice_at":
+            return "%s LSL %s" % (
+                color_expr_html(expr.args[0], loc_db),
+                color_expr_html(expr.args[1], loc_db)
+            )
+        elif isinstance(expr, m2_expr.ExprOp) and expr.op in extend_lst:
+            op_str = expr.op
+            return "%s %s %s" % (
+                color_expr_html(expr.args[0], loc_db),
+                op_str,
+                color_expr_html(expr.args[1], loc_db)
+            )
+        elif isinstance(expr, m2_expr.ExprOp) and expr.op == "postinc":
+            if int(expr.args[1]) != 0:
+                return "[%s], %s" % (
+                    color_expr_html(expr.args[0], loc_db),
+                    color_expr_html(expr.args[1], loc_db)
+                )
+            else:
+                return "[%s]" % (color_expr_html(expr.args[0], loc_db))
+        elif isinstance(expr, m2_expr.ExprOp) and expr.op == "preinc_wb":
+            if int(expr.args[1]) != 0:
+                return "[%s, %s]!" % (
+                    color_expr_html(expr.args[0], loc_db),
+                    color_expr_html(expr.args[1], loc_db)
+                )
+            else:
+                return "[%s]" % (color_expr_html(expr.args[0], loc_db))
+        elif isinstance(expr, m2_expr.ExprOp) and expr.op == "preinc":
+            if len(expr.args) == 1:
+                return "[%s]" % (color_expr_html(expr.args[0], loc_db))
+            elif not isinstance(expr.args[1], m2_expr.ExprInt) or int(expr.args[1]) != 0:
+                return "[%s, %s]" % (
+                    color_expr_html(expr.args[0], loc_db),
+                    color_expr_html(expr.args[1], loc_db)
+                )
+            else:
+                return "[%s]" % color_expr_html(expr.args[0], loc_db)
+        elif isinstance(expr, m2_expr.ExprOp) and expr.op == 'segm':
+            arg = expr.args[1]
+            if isinstance(arg, m2_expr.ExprId):
+                arg = str(arg)
+            elif arg.op == 'LSL' and int(arg.args[1]) == 0:
+                arg = str(arg.args[0])
+            else:
+                arg = "%s %s %s" % (
+                    color_expr_html(arg.args[0], loc_db),
+                    utils.set_html_text_color(arg.op, utils.COLOR_OP),
+                    color_expr_html(arg.args[1], loc_db)
+                )
+            return '[%s, %s]' % (color_expr_html(expr.args[0], loc_db), arg)
 
         else:
             raise NotImplementedError("bad op")
@@ -2216,12 +2284,15 @@ aarch64op("ldarh",[bs('0'), bs('1'), bs('001000'), bs('0'), bs('1'), bs('0'), bs
 aarch64op("ldaxp",[bs('1'), sf, bs('001000'), bs('0'), bs('1'), bs('1'), bs('11111'), bs('1'), bs('11111'), rn64_deref_nooff, rt], [rt, rn64_deref_nooff])
 aarch64op("ldaxr",[bs('1'), sf, bs('001000'), bs('0'), bs('1'), bs('0'), bs('11111'), bs('1'), bs('11111'), rn64_deref_nooff, rt], [rt, rn64_deref_nooff])
 
+aarch64op("stlr", [bs('1'), sf, bs('001000'), bs('1'), bs('0'), bs('0'), bs('11111'), bs('1'), bs('11111'), rn64_deref_nooff, rt], [rt, rn64_deref_nooff])
+aarch64op("stlrb",[bs('0'), bs('0'), bs('001000'), bs('1'), bs('0'), bs('0'), bs('11111'), bs('1'), bs('11111'), rn64_deref_nooff, rt32], [rt32, rn64_deref_nooff])
+aarch64op("stlrh",[bs('0'), bs('1'), bs('001000'), bs('1'), bs('0'), bs('0'), bs('11111'), bs('1'), bs('11111'), rn64_deref_nooff, rt32], [rt32, rn64_deref_nooff])
+
 aarch64op("stlxr", [bs('1'), sf, bs('001000'), bs('0'), bs('0'), bs('0'), rs32, bs('1'), bs('11111'), rn64_deref_nooff, rt], [rs32, rt, rn64_deref_nooff])
 aarch64op("stlxrb",[bs('0'), bs('0'), bs('001000'), bs('0'), bs('0'), bs('0'), rs32, bs('1'), bs('11111'), rn64_deref_nooff, rt32], [rs32, rt32, rn64_deref_nooff])
 aarch64op("stlxrh",[bs('0'), bs('1'), bs('001000'), bs('0'), bs('0'), bs('0'), rs32, bs('1'), bs('11111'), rn64_deref_nooff, rt32], [rs32, rt32, rn64_deref_nooff])
 aarch64op("stlxp", [bs('1'), sf, bs('001000'), bs('0'), bs('0'), bs('1'), rs32, bs('1'), rt2, rn64_deref_nooff, rt], [rs32, rt, rt2, rn64_deref_nooff])
 
-aarch64op("stlrb",[bs('0'), bs('0'), bs('001000'), bs('1'), bs('0'), bs('0'), bs('11111'), bs('1'), bs('11111'), rn64_deref_nooff, rt32], [rt32, rn64_deref_nooff])
 
 # barriers p.135
 aarch64op("dsb", [bs('1101010100'), bs('0000110011'), crm, bs('1'), bs('00'), bs('11111')], [crm])

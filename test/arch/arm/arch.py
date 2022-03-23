@@ -261,6 +261,7 @@ for s, l in reg_tests_arm:
     print([x for x in a])
     print(repr(b))
     assert(b in a)
+    print(l.to_html())
 
 reg_tests_armt = [
     ("0006ff5c    LSLS       R2, R0, 0x1A",
@@ -791,6 +792,7 @@ for s, l in reg_tests_armt:
     print([x for x in a])
     print(repr(b))
     assert(b in a)
+    print(l.to_html())
 
 print('TEST time', time.time() - ts)
 

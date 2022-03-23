@@ -710,6 +710,7 @@ for script in [["basic_op.py"],
                ["expr_random.py"],
                ["expr_translate.py"],
                ["expr_reduce.py"],
+               ["interfer.py"],
                ]:
     testset += ExampleExpression(script)
 
@@ -795,6 +796,11 @@ for jitter in ExampleJitter.jitter_engines:
                              products=[Example.get_sample("box_upx_exe_unupx.bin")],
                              tags=tags.get(jitter, []))
 
+    testset += ExampleJitter(["memory_breakpoint.py",
+                              Example.get_sample("box_upx.exe")] +
+                             ["--jitter", jitter] +
+                             ["-o", "0x401130", "0x100", "--access", "rw"],
+                             tags=tags.get(jitter, []))
 
 for script, dep in [(["x86_32.py", Example.get_sample("x86_32_sc.bin")], []),
                     (["arm.py", Example.get_sample("md5_arm"), "--mimic-env"],
